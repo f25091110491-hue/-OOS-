@@ -218,3 +218,69 @@ if __name__ == "__main__":
 
     # 2. OOS 验证（独立验证机制）
     oos_result = oos_validation(tickers)
+# ===================== 可视化模块（绝对不报错版）=====================
+import matplotlib.pyplot as plt
+import seaborn as sns
+from math import pi
+
+# 字体设置
+plt.rcParams["font.sans-serif"] = ["DejaVu Sans"]
+plt.rcParams["axes.unicode_minus"] = False
+
+# -------------------- 1. 综合得分排名柱状图 --------------------
+plt.figure(figsize=(12, 5))
+sns.barplot(data=df_final, x="名称", y="综合得分", palette="viridis")
+plt.title("Stock Comprehensive Score Ranking", fontsize=14, fontweight='bold')
+plt.xlabel("Stock Name", fontsize=12)
+plt.ylabel("Composite Score", fontsize=12)
+plt.xticks(rotation=45, ha="right")
+plt.tight_layout()
+plt.show()
+
+# -------------------- 2. 收益率 vs 波动率 散点图 --------------------
+plt.figure(figsize=(10, 5))
+sns.scatterplot(data=df_final, x="年化波动率", y="期间收益率", hue="名称", s=100)
+plt.title("Return vs Volatility", fontsize=14, fontweight='bold')
+plt.xlabel("Annualized Volatility", fontsize=12)
+plt.ylabel("Return", fontsize=12)
+plt.grid(alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# -------------------- 3. 第一名股票 四维得分雷达图 --------------------
+def plot_radar(row):
+    categories = ["Valuation", "Quality", "Momentum", "Risk"]
+    values = [row["估值得分"], row["品质得分"], row["动能得分"], row["风险得分"]]
+    values += values[:1]
+    
+    angles = [n / float(len(categories)) * 2 * pi for n in range(len(categories))]
+    angles += angles[:1]
+    
+    plt.figure(figsize=(6, 6))
+    ax = plt.subplot(111, polar=True)
+    
+    ax.plot(angles, values, 'o-', linewidth=2, label=row["名称"])
+    ax.fill(angles, values, alpha=0.25)
+    
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(categories, fontsize=12)
+    plt.title(f"Top {row['排名']} Stock: {row['名称']} - 4-Dim Score", 
+              fontsize=14, fontweight='bold', pad=20)
+    plt.legend(loc='upper right', bbox_to_anchor=(1.2, 1.1))
+    plt.tight_layout()
+    plt.show()
+
+plot_radar(df_result.iloc[0])
+
+# -------------------- 4. OOS 收益对比图 --------------------
+if oos_result is not None:
+    labels = ["Stock Pool Avg", "Model Top3"]
+    values = [oos_result["oos_return_all"], oos_result["oos_return_top3"]]
+    
+    plt.figure(figsize=(6, 4))
+    sns.barplot(x=labels, y=values, palette=["gray", "orange"])
+    plt.title("OOS Return Comparison", fontsize=14, fontweight='bold')
+    plt.xlabel("Group", fontsize=12)
+    plt.ylabel("Return", fontsize=12)
+    plt.tight_layout()
+    plt.show()
